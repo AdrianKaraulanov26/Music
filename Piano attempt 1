@@ -1,0 +1,57 @@
+import jm.music.data.Note;
+import jm.util.Play;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.util.HashMap;
+
+public class Main{
+    private static JFrame frame;
+    private static JPanel piano;
+
+    public static JButton Create_key(String name, int font_size, int xstart, int ystart, int width, int length, int red, int green, int blue) {
+        JButton button = new JButton(name);
+        button.setFont(new Font("Arial", Font.HANGING_BASELINE, font_size));
+        button.setOpaque(true);
+        button.setBackground(new Color(red, green, blue));
+        button.setBounds(xstart, ystart, width, length);
+        button.setHorizontalAlignment(SwingConstants.CENTER);
+        button.setFocusPainted(false);
+        button.setForeground(Color.WHITE);
+        button.setBorderPainted(false);
+        button.setContentAreaFilled(true);
+        return button;
+    }
+    public static void main(String[] args) {
+
+        frame = new JFrame();
+        frame.setSize(2400, 1320);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setLocationRelativeTo(null);
+        frame.setLayout(null);
+        piano = new JPanel();
+        piano.setLayout(null);
+        piano.setBounds(0,720,2400,600);
+        piano.setBackground(new Color(200, 200, 200));
+        piano.setOpaque(true);
+
+        JButton[] white_keys = new JButton[21];
+        String[] notes = {"C","D","E","F","G","A","B","C","D","E","F","G","A","B","C","D","E","F","G","A","B"};
+        for (int i = 0; i < white_keys.length; i++) {
+            white_keys[i] = Create_key(notes[i],30,0+102*i,960,100,360,200,200,200);
+            frame.add(white_keys[i]);
+        }
+        JButton[] black_keys = new JButton[15];
+        String[] black_notes = {"C#","D#","F#","G#","A#","C#","D#","F#","G#","A#","C#","D#","F#","G#","A#"};
+        int[] black_spacing = {75,175,375,475,575,775,875,1075,1175,1275,1475,1575,1775,1875,1975};
+        for (int i = 0; i < black_keys.length; i++) {
+            black_keys[i] = Create_key(black_notes[i],30,black_spacing[i],720,75,200,0,0,0);
+            frame.add(black_keys[i]);
+        }
+        frame.add(piano);
+        frame.setVisible(true);
+    }
+}
