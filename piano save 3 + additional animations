@@ -3,7 +3,6 @@ import jm.util.Play;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
 
@@ -12,6 +11,29 @@ public class Main {
     private static JPanel piano;
     private static HashMap<Character, Integer> keyNoteMap = new HashMap<>();
     private static HashMap<String, Integer> noteMap = new HashMap<>();
+
+    // Custom JPanel to paint the GIF while keeping it at (0,0) with fixed dimensions
+    static class GifBackgroundPanel extends JPanel {
+        private ImageIcon gifIcon;
+
+        public GifBackgroundPanel(String gifUrl) {
+            try {
+                URL url = new URL(gifUrl);
+                gifIcon = new ImageIcon(url);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            setBounds(0, 0, 2400, 770); // Keep the same positioning
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            if (gifIcon != null) {
+                g.drawImage(gifIcon.getImage(), 0, 0, 2400, 770, this);
+            }
+        }
+    }
 
     public static JButton Create_key(String name, int font_size, int xstart, int ystart, int width, int length, int red, int green, int blue) {
         JButton button = new JButton(name);
@@ -25,7 +47,7 @@ public class Main {
         button.setBorderPainted(false);
         button.setContentAreaFilled(true);
         System.out.println("Button pressed: " + name);
-        button.addActionListener(e -> {playNote(noteMap.get(name));frame.requestFocusInWindow();});
+        button.addActionListener(e -> { playNote(noteMap.get(name)); frame.requestFocusInWindow(); });
         return button;
     }
 
@@ -36,76 +58,83 @@ public class Main {
         }
     }
 
-    public static void main(String[] args) throws MalformedURLException {
-        URL background = new URL("https://media1.tenor.com/m/hwXxv33zeS4AAAAd/sea-travel.gif");
-        frame = new JFrame();
-        ImageIcon backgroundIcon = new ImageIcon(background);
-        JButton background_panel = new JButton();
-        background_panel.setBounds(0,0,2400,770);
-        background_panel.setBorderPainted(false);
-        background_panel.setIcon(backgroundIcon);
-        background_panel.setOpaque(true);
-        frame.setSize(2400, 1320);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setLocationRelativeTo(null);
-        frame.setLayout(null);
-        frame.add(background_panel);
-        piano = new JPanel() {
-            protected void paintComponent(Graphics g) {
-                super.paintComponent(g);
-                g.setColor(Color.BLACK);
-                for (int x = 0; x < getWidth(); x += 102) {
-                    g.drawLine(x, 0, x, getHeight());
+    public static void main(String[] args) {
+        try {
+            // Use the GIF from the second code snippet
+            String gifUrl = "https://media1.tenor.com/m/6Yu4lwkke20AAAAd/night-sky-haynes.gif";
+            frame = new JFrame("Piano with GIF Background");
+            frame.setSize(2400, 1320);
+            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.setLocationRelativeTo(null);
+            frame.setLayout(null);
+
+            // Background panel (fixed position)
+            GifBackgroundPanel backgroundPanel = new GifBackgroundPanel(gifUrl);
+            frame.add(backgroundPanel);
+
+            // Piano panel (at bottom)
+            piano = new JPanel() {
+                protected void paintComponent(Graphics g) {
+                    super.paintComponent(g);
+                    g.setColor(Color.BLACK);
+                    for (int x = 0; x < getWidth(); x += 102) {
+                        g.drawLine(x, 0, x, getHeight());
+                    }
                 }
+            };
+            piano.setLayout(null);
+            piano.setBounds(0, 770, 2400, 600);
+            piano.setBackground(Color.WHITE);
+
+            // Create white keys
+            String[] notes = {"C3", "D3", "E3", "F3", "G3", "A3", "B3", "C4", "D4", "E4", "F4", "G4", "A4", "B4", "C5", "D5", "E5", "F5", "G5", "A5", "B5"};
+            int[] midiNotes = {48, 50, 52, 53, 55, 57, 59, 60, 62, 64, 65, 67, 69, 71, 72, 74, 76, 77, 79, 81, 83};
+            int[] black_midiNotes = {49, 51, 54, 56, 58, 61, 63, 66, 68, 70, 73, 75, 78, 80, 82};
+            int[] combonotes = {48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83};
+            JButton[] white_keys = new JButton[21];
+
+            for (int i = 0; i < white_keys.length; i++) {
+                noteMap.put(notes[i], midiNotes[i]);
+                white_keys[i] = Create_key(notes[i], 30, 0 + 102 * i, 1010, 99, 200, 255, 255, 255);
+                white_keys[i].setContentAreaFilled(false);
+                frame.add(white_keys[i]);
             }
-        };
-        piano.setLayout(null);
-        piano.setBounds(0, 770, 2400, 600);
-        piano.setBackground(Color.WHITE);
 
-        String[] notes = {"C3", "D3", "E3", "F3", "G3", "A3", "B3", "C4", "D4", "E4", "F4", "G4", "A4", "B4", "C5", "D5", "E5", "F5", "G5", "A5", "B5"};
-        int[] midiNotes = {48, 50, 52, 53, 55, 57, 59, 60, 62, 64, 65, 67, 69, 71, 72, 74, 76, 77, 79, 81, 83};
-        int[] black_midiNotes = {49, 51, 54, 56, 58, 61, 63, 66, 68, 70, 73, 75, 78, 80, 82};
-        int[] combonotes = {48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83};
-        JButton[] white_keys = new JButton[21];
-        for (int i = 0; i < white_keys.length; i++) {
-            noteMap.put(notes[i], midiNotes[i]);
-            white_keys[i] = Create_key(notes[i], 30, 0 + 102 * i, 1010, 99, 200, 255, 255, 255);
-            white_keys[i].setContentAreaFilled(false);
-            frame.add(white_keys[i]);
-        }
+            // Create black keys
+            String[] black_notes = {"C3#", "D3#", "F3#", "G3#", "A3#", "C4#", "D4#", "F4#", "G4#", "A4#", "C5#", "D5#", "F5#", "G5#", "A5#"};
+            int[] black_spacing = {73, 175, 375, 475, 575, 775, 875, 1075, 1175, 1275, 1475, 1575, 1775, 1875, 1975};
+            JButton[] black_keys = new JButton[15];
 
-        String[] black_notes = {"C3#", "D3#", "F3#", "G3#", "A3#", "C4#", "D4#", "F4#", "G4#", "A4#", "C5#", "D5#", "F5#", "G5#", "A5#"};
+            for (int i = 0; i < black_keys.length; i++) {
+                noteMap.put(black_notes[i], black_midiNotes[i]);
+                black_keys[i] = Create_key(black_notes[i], 20, black_spacing[i], 770, 75, 240, 0, 0, 0);
+                black_keys[i].setForeground(Color.WHITE);
+                frame.add(black_keys[i]);
+            }
 
-        int[] black_spacing = {73, 175, 375, 475, 575, 775, 875, 1075, 1175, 1275, 1475, 1575, 1775, 1875, 1975};
+            // Assign keys to keyboard
+            char[] keyboardKeys = {'1','2','3','4','5','6','7','8','9','0','-','=','Q','W','E','R','T','Y','U','I','O','P','[',']','A','S','D','F','G','H','J','K','L',';','.','/'};
+            for (int i = 0; i < keyboardKeys.length && i < combonotes.length; i++) {
+                keyNoteMap.put(keyboardKeys[i], combonotes[i]);
+            }
 
-        JButton[] black_keys = new JButton[15];
-        for (int i = 0; i < black_keys.length; i++) {
-            noteMap.put(black_notes[i], black_midiNotes[i]);
-            black_keys[i] = Create_key(black_notes[i], 20, black_spacing[i], 770, 75, 240, 0, 0, 0);
-            black_keys[i].setForeground(Color.WHITE);
-            frame.add(black_keys[i]);
-        }
-
-        char[] keyboardKeys = {'1','2','3','4','5','6','7','8','9','0','-','=','Q','W','E','R','T','Y','U','I','O','P','[',']','A','S','D','F','G','H','J','K','L',';','.','/'};
-        for (int i = 0; i < keyboardKeys.length && i < combonotes.length; i++) {
-            keyNoteMap.put(keyboardKeys[i], combonotes[i]);
-        }
-
-        frame.addKeyListener(new KeyAdapter() {
-            public void keyPressed(KeyEvent e) {
-                char keyChar = Character.toUpperCase(e.getKeyChar());
-                System.out.println("Key pressed: " + keyChar);
-                if (keyNoteMap.containsKey(keyChar)) {
-                    playNote(keyNoteMap.get(keyChar));
+            frame.addKeyListener(new KeyAdapter() {
+                public void keyPressed(KeyEvent e) {
+                    char keyChar = Character.toUpperCase(e.getKeyChar());
+                    System.out.println("Key pressed: " + keyChar);
+                    if (keyNoteMap.containsKey(keyChar)) {
+                        playNote(keyNoteMap.get(keyChar));
+                    }
                 }
-            }
-        });
+            });
 
-        frame.setFocusable(true);
-        frame.requestFocusInWindow();
+            frame.setFocusable(true);
+            frame.requestFocusInWindow();
 
-        frame.add(piano);
-        frame.setVisible(true);
+            frame.add(piano);
+            frame.setVisible(true);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
