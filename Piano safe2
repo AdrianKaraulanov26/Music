@@ -10,6 +10,7 @@ public class Main {
     private static JPanel piano;
     private static HashMap<Character, Integer> keyNoteMap = new HashMap<>();
     private static HashMap<String, Integer> noteMap = new HashMap<>();
+
     public static JButton Create_key(String name, int font_size, int xstart, int ystart, int width, int length, int red, int green, int blue) {
         JButton button = new JButton(name);
         button.setFont(new Font("Arial", Font.BOLD, font_size));
@@ -21,7 +22,15 @@ public class Main {
         button.setForeground(Color.BLACK);
         button.setBorderPainted(false);
         button.setContentAreaFilled(true);
+        button.addActionListener(e -> {playNote(noteMap.get(name));frame.requestFocusInWindow();});
         return button;
+    }
+
+    public static void playNote(int midiValue) {
+        if (midiValue != 0) {
+            Note note = new Note(midiValue, 1);
+            Play.midi(note);
+        }
     }
 
     public static void main(String[] args) {
@@ -41,18 +50,18 @@ public class Main {
             }
         };
         piano.setLayout(null);
-        piano.setBounds(0, 720, 2400, 600);
+        piano.setBounds(0, 770, 2400, 600);
         piano.setBackground(Color.WHITE);
-        piano.setOpaque(true);
+
         String[] notes = {"C4", "D4", "E4", "F4", "G4", "A4", "B4", "C5", "D5", "E5", "F5", "G5", "A5", "B5", "C6", "D6", "E6", "F6", "G6", "A6", "B6"};
         int[] midiNotes = {60, 62, 64, 65, 67, 69, 71, 72, 74, 76, 77, 79, 81, 83, 84, 86, 88, 89, 91, 93, 95};
 
         JButton[] white_keys = new JButton[21];
         for (int i = 0; i < white_keys.length; i++) {
-//            noteMap.put(notes[i], midiNotes[i]);
-            white_keys[i] = Create_key(notes[i], 30, 0 + 102 * i, 960, 99, 360, 255, 255, 255);
-            frame.add(white_keys[i]);
+            noteMap.put(notes[i], midiNotes[i]);
+            white_keys[i] = Create_key(notes[i], 30, 0 + 102 * i, 1010, 99, 200, 255, 255, 255);
             white_keys[i].setContentAreaFilled(false);
+            frame.add(white_keys[i]);
         }
 
         String[] black_notes = {"C4#", "D4#", "F4#", "G4#", "A4#", "C5#", "D5#", "F5#", "G5#", "A5#", "C6#", "D6#", "F6#", "G6#", "A6#"};
@@ -61,29 +70,22 @@ public class Main {
 
         JButton[] black_keys = new JButton[15];
         for (int i = 0; i < black_keys.length; i++) {
-//            noteMap.put(black_notes[i], black_midiNotes[i]);
-            black_keys[i] = Create_key(black_notes[i], 20, black_spacing[i], 720, 75, 240, 0, 0, 0);
+            noteMap.put(black_notes[i], black_midiNotes[i]);
+            black_keys[i] = Create_key(black_notes[i], 20, black_spacing[i], 770, 75, 240, 0, 0, 0);
             black_keys[i].setForeground(Color.WHITE);
             frame.add(black_keys[i]);
         }
-        char[] keyboard1 = {'1','2','3','4','5','6','7','8','9','0','-','='};
-        char[] keyboard2 = {'Q','W','E','R','T','Y','U','I','O','P','[',']'};
-        char[] keyboard3 = {'A','S','D','F','G','H','J','K','L',';','"','|'};
 
-        int midiStart = 60;
-
-        int index = 0;
-        for (char key : keyboard1) keyNoteMap.put(key, midiStart + index++);
-        for (char key : keyboard2) keyNoteMap.put(key, midiStart + index++);
-        for (char key : keyboard3) keyNoteMap.put(key, midiStart + index++);
+        char[] keyboardKeys = {'1','2','3','4','5','6','7','8','9','0','-','=','Q','W','E','R','T','Y','U','I','O','P','[',']','A','S','D','F','G','H','J','K','L',';','"','|'};
+        for (int i = 0; i < keyboardKeys.length && i < midiNotes.length; i++) {
+            keyNoteMap.put(keyboardKeys[i], midiNotes[i]);
+        }
 
         frame.addKeyListener(new KeyAdapter() {
             public void keyPressed(KeyEvent e) {
                 char keyChar = Character.toUpperCase(e.getKeyChar());
                 if (keyNoteMap.containsKey(keyChar)) {
-                    int midiValue = keyNoteMap.get(keyChar);
-                    Note note = new Note(midiValue, 1);
-                    Play.midi(note);
+                    playNote(keyNoteMap.get(keyChar));
                 }
             }
         });
