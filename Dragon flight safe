@@ -46,43 +46,37 @@ class Dragon_Flight extends JPanel {
         int centerX = getWidth() / 2;
         int centerY = getHeight() / 2;
 
-        // Wing oscillation using sine function for smooth motion
         int wingOffset = (int) (Math.sin(angle) * 9);
 
-        // Scale dimensions
         int scaledBodyWidth = (int) (body.getWidth() * SCALE);
         int scaledBodyHeight = (int) (body.getHeight() * SCALE);
         int scaledWingWidth = (int) (leftWing.getWidth() * (SCALE + 0.5));
         int scaledWingHeight = (int) (leftWing.getHeight() * (SCALE + 0.5));
 
-        // Draw left wing with rotation
         int leftX = centerX - scaledBodyWidth / 2 - 90;
         int leftY = centerY - scaledWingHeight / 2 + wingOffset - 200;
         g2d.drawImage(leftWing, leftX, leftY, scaledWingWidth, scaledWingHeight, null);
 
-        // Draw right wing with rotation
         int rightX = centerX + 25;
         int rightY = centerY - scaledWingHeight / 2 + wingOffset - 200;
         g2d.drawImage(rightWing, rightX, rightY, scaledWingWidth, scaledWingHeight, null);
 
-        // Draw dragon body
         g2d.drawImage(body, centerX - scaledBodyWidth / 2, centerY - scaledBodyHeight / 2, scaledBodyWidth, scaledBodyHeight, null);
 
         g2d.dispose();
 
-        // Draw buffered image to panel
         g.drawImage(buffer, 0, 0, null);
     }
 
     @Override
     public void update(Graphics g) {
-        paintComponent(g); // Override update to prevent default clear
+        paintComponent(g);
     }
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             JFrame frame = new JFrame("Dragon Flight Animation");
-            frame.setSize(1200, 900); // Adjusted for better scaling
+            frame.setSize(1200, 900);
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             frame.setUndecorated(true); // Removes window border for full visibility
             frame.setBackground(new Color(0, 0, 0, 0)); // Transparent frame background
