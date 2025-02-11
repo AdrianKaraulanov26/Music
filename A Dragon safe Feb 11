@@ -1,0 +1,79 @@
+import javax.swing.*;
+import java.awt.*;
+import java.io.IOException;
+import javax.imageio.ImageIO;
+import java.net.URL;
+
+class Dragon_Flight extends JPanel {
+    private JLabel bodyLabel, leftWingLabel, rightWingLabel;
+    private int wingOffset = 0;
+    private boolean goingUp = true;
+    private static final int FRAME_RATE = 70; // 60 FPS for smooth motion
+    private static final int WING_MOVEMENT_RANGE = 30; // How far wings move
+    private static final double SCALE = 1.9; // Scale factor
+
+    public Dragon_Flight() {
+        setLayout(null);
+        setOpaque(false);
+
+        try {
+            ImageIcon body = new ImageIcon(new URL("https://github.com/AdrianKaraulanov26/Music/blob/main/Body_modified.png?raw=true"));
+            ImageIcon leftWing = new ImageIcon(new URL("https://github.com/AdrianKaraulanov26/Music/blob/main/LeftWing_modified.png?raw=true"));
+            ImageIcon rightWing = new ImageIcon(new URL("https://github.com/AdrianKaraulanov26/Music/blob/main/RightWing_modified.png?raw=true"));
+
+            int scaledBodyWidth = (int) (body.getIconWidth() * SCALE);
+            int scaledBodyHeight = (int) (body.getIconHeight() * SCALE);
+            int scaledWingWidth = (int) (leftWing.getIconWidth() * (SCALE + 1.5));
+            int scaledWingHeight = (int) (leftWing.getIconHeight() * (SCALE + 1.5));
+
+            int centerX = 900;
+            int centerY = 350;
+
+            // Create labels for images
+            bodyLabel = new JLabel(resizeIcon(body, scaledBodyWidth, scaledBodyHeight));
+            bodyLabel.setBounds(centerX - scaledBodyWidth / 2-10, centerY - scaledBodyHeight / 2, scaledBodyWidth, scaledBodyHeight);
+            add(bodyLabel);
+
+            rightWingLabel = new JLabel(resizeIcon(rightWing, scaledWingWidth, scaledWingHeight));
+            rightWingLabel.setBounds(centerX + 165, centerY - scaledWingHeight / 2 - 260, scaledWingWidth, scaledWingHeight);
+            add(rightWingLabel);
+
+
+
+            leftWingLabel = new JLabel(resizeIcon(leftWing, scaledWingWidth, scaledWingHeight));
+            leftWingLabel.setBounds(centerX - scaledBodyWidth / 2 - 435, centerY - scaledWingHeight / 2 - 250, scaledWingWidth, scaledWingHeight);
+            add(leftWingLabel);
+
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // Animation timer (moves wings only)
+        new Timer(1000 / FRAME_RATE, e -> updateWingPosition()).start();
+    }
+
+    private void updateWingPosition() {
+        if (goingUp) {
+            wingOffset += 1;
+            if (wingOffset >= WING_MOVEMENT_RANGE) {
+                goingUp = false;
+            }
+        } else {
+            wingOffset -= 1;
+            if (wingOffset <= -WING_MOVEMENT_RANGE) {
+                goingUp = true;
+            }
+        }
+
+        // Shift wings on the Y-axis
+        leftWingLabel.setLocation(leftWingLabel.getX(), 250 - leftWingLabel.getHeight() / 2 + 45 + wingOffset);
+        rightWingLabel.setLocation(rightWingLabel.getX(), 250 - rightWingLabel.getHeight() / 2 +30 + wingOffset);
+    }
+
+    private ImageIcon resizeIcon(ImageIcon icon, int width, int height) {
+        Image img = icon.getImage();
+        Image resizedImg = img.getScaledInstance(width, height, Image.SCALE_SMOOTH);
+        return new ImageIcon(resizedImg);
+    }
+}
