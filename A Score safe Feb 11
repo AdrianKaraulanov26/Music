@@ -1,0 +1,140 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
+class MusicScorePanel extends JPanel {
+    private final int PANEL_WIDTH = 2400;
+    private final int PANEL_HEIGHT = 300;
+    private final int NOTE_SPEED = 2;
+    private final int TARGET_X = 100;
+    private int score = 0;
+    private final int CLEF_GAP = 40;
+
+    private ConcurrentHashMap<Integer, NoteObject> activeNotes = new ConcurrentHashMap<>();
+    private Timer noteTimer;
+    private int noteCounter = 0;
+
+    private int[][] predefinedNotes = {
+            {48, 1000}, {49, 1200}, {52, 1400}, {53, 1600}, {55, 1800},
+            {56, 2000}, {58, 2200}, {60, 2400}, {61, 2600}, {63, 2800},
+            {65, 3000}, {66, 3200}, {68, 3400}, {70, 3600}, {72, 3800}
+    };
+
+    private Set<Integer> sharpNotes = new HashSet<>(Set.of(
+            49, 51, 54, 56, 58,
+            61, 63, 66, 68, 70,
+            73, 75, 78, 80, 82,
+            85, 87, 90, 92, 94,
+            97, 99, 102, 104, 106,
+            109, 111, 114, 116, 118
+    ));
+
+    public MusicScorePanel() {
+        setPreferredSize(new Dimension(PANEL_WIDTH, PANEL_HEIGHT));
+        setBackground(Color.WHITE);
+        setupNoteSpawning();
+    }
+
+    private void setupNoteSpawning() {
+        noteTimer = new Timer(predefinedNotes[0][1], e -> {
+            spawnNote();
+            if (noteCounter < predefinedNotes.length - 1) {
+                noteTimer.setDelay(predefinedNotes[noteCounter][1]);
+            } else {
+                noteTimer.stop();
+            }
+        });
+        noteTimer.start();
+
+        Timer movementTimer = new Timer(16, e -> moveNotes());
+        movementTimer.start();
+    }
+
+    private void spawnNote() {
+        if (noteCounter < predefinedNotes.length) {
+            int midiValue = predefinedNotes[noteCounter][0];
+            boolean isSharp = sharpNotes.contains(midiValue);
+            activeNotes.put(noteCounter++, new NoteObject(PANEL_WIDTH, midiValue, isSharp));
+        }
+    }
+
+    private void moveNotes() {
+        Iterator<Map.Entry<Integer, NoteObject>> iterator = activeNotes.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<Integer, NoteObject> entry = iterator.next();
+            NoteObject note = entry.getValue();
+            note.x -= NOTE_SPEED;
+            if (note.x < TARGET_X - 30) {
+                iterator.remove();
+            }
+        }
+        repaint();
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        g.setColor(Color.BLACK);
+        g.drawString("Score: " + score, 10, 20);
+        drawClefs(g);
+        drawNotes(g);
+    }
+
+    private void drawClefs(Graphics g) {
+        g.setFont(new Font("Serif", Font.BOLD, 50));
+        g.drawString("𝄢", 50, 225);
+        g.drawString("𝄞", 50, 100);
+
+        int[] bassStaffLines = {170, 190, 210, 230, 250};
+        int[] trebleStaffLines = {50, 70, 90, 110, 130};
+
+        for (int lineY : bassStaffLines) {
+            g.drawLine(100, lineY, PANEL_WIDTH, lineY);
+        }
+        for (int lineY : trebleStaffLines) {
+            g.drawLine(100, lineY, PANEL_WIDTH, lineY);
+        }
+    }
+
+    private void drawNotes(Graphics g) {
+        g.setColor(Color.BLACK);
+        for (NoteObject note : activeNotes.values()) {
+            int noteY = getNoteYPosition(note.midiValue);
+            g.fillOval(note.x, noteY, 20, 20);
+            if (note.isSharp) {
+                g.setColor(Color.BLACK);
+                g.drawString("#", note.x + 25, noteY + 15);
+                g.setColor(Color.BLACK);
+            }
+        }
+    }
+
+    private int getNoteYPosition(int midiValue) {
+        int step = 10;
+        int c3Y = 210; // C3 (MIDI 48) is on the second line of the bass clef
+
+        if (midiValue < 60) {
+            return c3Y - ((midiValue - 48) * step);
+        } else {
+            int c4Y = 130 - CLEF_GAP; // Adjust for gap between clefs
+            return c4Y - ((midiValue - 60) * step);
+        }
+    }
+
+    private static class NoteObject {
+        int x;
+        int midiValue;
+        boolean isSharp;
+
+        public NoteObject(int x, int midiValue, boolean isSharp) {
+            this.x = x;
+            this.midiValue = midiValue;
+            this.isSharp = isSharp;
+        }
+    }
+}
