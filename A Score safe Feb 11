@@ -1,6 +1,8 @@
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -10,19 +12,15 @@ import java.util.concurrent.ConcurrentHashMap;
 class MusicScorePanel extends JPanel {
     private final int PANEL_WIDTH = 2400;
     private final int PANEL_HEIGHT = 300;
-    private final int NOTE_SPEED = 2;
+    private final int NOTE_SPEED = 8;
     private final int TARGET_X = 100;
     private int score = 0;
-    private final int CLEF_GAP = 40;
-
     private ConcurrentHashMap<Integer, NoteObject> activeNotes = new ConcurrentHashMap<>();
     private Timer noteTimer;
     private int noteCounter = 0;
 
     private int[][] predefinedNotes = {
-            {48, 1000}, {49, 1200}, {52, 1400}, {53, 1600}, {55, 1800},
-            {56, 2000}, {58, 2200}, {60, 2400}, {61, 2600}, {63, 2800},
-            {65, 3000}, {66, 3200}, {68, 3400}, {70, 3600}, {72, 3800}
+            {48, 1000}, {49, 1100}, {50,1200},{51, 1300}
     };
 
     private Set<Integer> sharpNotes = new HashSet<>(Set.of(
@@ -36,8 +34,10 @@ class MusicScorePanel extends JPanel {
 
     public MusicScorePanel() {
         setPreferredSize(new Dimension(PANEL_WIDTH, PANEL_HEIGHT));
-        setBackground(Color.WHITE);
         setupNoteSpawning();
+        setBackground(new Color(255, 255, 255, 255));
+
+
     }
 
     private void setupNoteSpawning() {
@@ -51,7 +51,7 @@ class MusicScorePanel extends JPanel {
         });
         noteTimer.start();
 
-        Timer movementTimer = new Timer(16, e -> moveNotes());
+        Timer movementTimer = new Timer(1, e -> moveNotes());
         movementTimer.start();
     }
 
@@ -81,48 +81,112 @@ class MusicScorePanel extends JPanel {
         super.paintComponent(g);
         g.setColor(Color.BLACK);
         g.drawString("Score: " + score, 10, 20);
-        drawClefs(g);
+        try {
+            drawClefs(g);
+        } catch (MalformedURLException e) {
+            throw new RuntimeException(e);
+        }
         drawNotes(g);
     }
 
-    private void drawClefs(Graphics g) {
+    private void drawClefs(Graphics g) throws MalformedURLException {
         g.setFont(new Font("Serif", Font.BOLD, 50));
-        g.drawString("𝄢", 50, 225);
-        g.drawString("𝄞", 50, 100);
+        URL bass_clef = new URL("https://cdn-icons-png.flaticon.com/512/898/898981.png");
+        URL treble_clef = new URL("https://cdn-icons-png.flaticon.com/512/2/2227.png");
+        ImageIcon bassClefIcon = new ImageIcon(bass_clef);
+        ImageIcon trebleClefIcon = new ImageIcon(treble_clef);
+        Image scaledBassImage = bassClefIcon.getImage().getScaledInstance(60, 60, Image.SCALE_SMOOTH);
+        Image scaledTrebleImage = trebleClefIcon.getImage().getScaledInstance(100, 100, Image.SCALE_SMOOTH);
+        ImageIcon scaledBassClefIcon = new ImageIcon(scaledBassImage);
+        ImageIcon scaledTrebleClefIcon = new ImageIcon(scaledTrebleImage);
+
+        scaledBassClefIcon.paintIcon(this, g, 30, 165);
+        scaledTrebleClefIcon.paintIcon(this, g, 0, 50);
 
         int[] bassStaffLines = {170, 190, 210, 230, 250};
         int[] trebleStaffLines = {50, 70, 90, 110, 130};
 
         for (int lineY : bassStaffLines) {
-            g.drawLine(100, lineY, PANEL_WIDTH, lineY);
+            g.drawLine(20, lineY, PANEL_WIDTH, lineY);
         }
         for (int lineY : trebleStaffLines) {
-            g.drawLine(100, lineY, PANEL_WIDTH, lineY);
+            g.drawLine(20, lineY, PANEL_WIDTH, lineY);
         }
     }
 
     private void drawNotes(Graphics g) {
-        g.setColor(Color.BLACK);
         for (NoteObject note : activeNotes.values()) {
             int noteY = getNoteYPosition(note.midiValue);
+            g.setColor(Color.BLACK);
             g.fillOval(note.x, noteY, 20, 20);
             if (note.isSharp) {
-                g.setColor(Color.BLACK);
                 g.drawString("#", note.x + 25, noteY + 15);
-                g.setColor(Color.BLACK);
             }
         }
     }
 
     private int getNoteYPosition(int midiValue) {
-        int step = 10;
-        int c3Y = 210; // C3 (MIDI 48) is on the second line of the bass clef
-
-        if (midiValue < 60) {
-            return c3Y - ((midiValue - 48) * step);
-        } else {
-            int c4Y = 130 - CLEF_GAP; // Adjust for gap between clefs
-            return c4Y - ((midiValue - 60) * step);
+        switch (midiValue) {
+            case 48: // C3
+            case 49: // C#3
+                return 220;
+            case 50: // D3
+            case 51: // D#3
+                return 210;
+            case 52: // E3
+                return 200;
+            case 53: // F3
+            case 54: // F#3
+                return 190;
+            case 55: // G3
+            case 56: // G#3
+                return 180;
+            case 57: // A3
+            case 58: // A#3
+                return 170;
+            case 59: // B3
+                return 160;
+            case 60: // C4
+            case 61: // C#4
+                return 140;
+            case 62: // D4
+            case 63: // D#4
+                return 130;
+            case 64: // E4
+                return 120;
+            case 65: // F4
+            case 66: // F#4
+                return 110;
+            case 67: // G4
+            case 68: // G#4
+                return 100;
+            case 69: // A4
+            case 70: // A#4
+                return 90;
+            case 71: // B4
+                return 80;
+            case 72: // C5
+                return 70;
+            case 73: // C#5
+                return 70;
+            case 74: // D5
+            case 75: // D#5
+                return 60;
+            case 76: // E5
+                return 50;
+            case 77: // F5
+            case 78: // F#5
+                return 40;
+            case 79: // G5
+            case 80: // G#5
+                return 30;
+            case 81: // A5
+            case 82: // A#5
+                return 20;
+            case 83: // B5
+                return 10;
+            default:
+                return 0;
         }
     }
 
@@ -136,5 +200,14 @@ class MusicScorePanel extends JPanel {
             this.midiValue = midiValue;
             this.isSharp = isSharp;
         }
+    }
+
+    public static void main(String[] args) {
+        JFrame frame = new JFrame("Music Score Panel");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.getContentPane().add(new MusicScorePanel());
+        frame.pack();
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
     }
 }
