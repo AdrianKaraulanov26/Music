@@ -57,9 +57,11 @@ public class Main {
         }
     }
 
+
     public void main(String[] args) {
 
         try {
+
             String gifUrl = "https://media.istockphoto.com/id/468756992/photo/night-sky-with-stars-and-blue-nebula-over-water.jpg?s=612x612&w=0&k=20&c=7l7orITTtsTp3iUtAPESp1-RC4wtC17Fa-QbpthfVzI=";
             frame = new JFrame("Piano with GIF Background");
             frame.setSize(2400, 1320);
