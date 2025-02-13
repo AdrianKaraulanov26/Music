@@ -8,9 +8,9 @@ class Dragon_Flight extends JPanel {
     private JLabel bodyLabel, leftWingLabel, rightWingLabel;
     private int wingOffset = 0;
     private boolean goingUp = true;
-    private static final int FRAME_RATE = 70; // 60 FPS for smooth motion
-    private static final int WING_MOVEMENT_RANGE = 30; // How far wings move
-    private static final double SCALE = 1.9; // Scale factor
+    private static final int FRAME_RATE = 70;
+    private static final int WING_MOVEMENT_RANGE = 30;
+    private static final double SCALE = 1.9;
 
     public Dragon_Flight() {
         setLayout(null);
@@ -29,7 +29,6 @@ class Dragon_Flight extends JPanel {
             int centerX = 900;
             int centerY = 350;
 
-            // Create labels for images
             bodyLabel = new JLabel(resizeIcon(body, scaledBodyWidth, scaledBodyHeight));
             bodyLabel.setBounds(centerX - scaledBodyWidth / 2-10, centerY - scaledBodyHeight / 2, scaledBodyWidth, scaledBodyHeight);
             add(bodyLabel);
@@ -49,7 +48,6 @@ class Dragon_Flight extends JPanel {
             e.printStackTrace();
         }
 
-        // Animation timer (moves wings only)
         new Timer(1000 / FRAME_RATE, e -> updateWingPosition()).start();
     }
 
@@ -66,7 +64,6 @@ class Dragon_Flight extends JPanel {
             }
         }
 
-        // Shift wings on the Y-axis
         leftWingLabel.setLocation(leftWingLabel.getX(), 250 - leftWingLabel.getHeight() / 2 + 45 + wingOffset);
         rightWingLabel.setLocation(rightWingLabel.getX(), 250 - rightWingLabel.getHeight() / 2 +30 + wingOffset);
     }
