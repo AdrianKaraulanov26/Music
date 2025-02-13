@@ -1,49 +1,84 @@
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import javax.sound.midi.*;
 
 class MusicScorePanel extends JPanel {
-    private final int PANEL_WIDTH = 2400;
-    private final int PANEL_HEIGHT = 300;
-    private final int NOTE_SPEED = 8;
-    private final int TARGET_X = 100;
-    private int score = 0;
-    private ConcurrentHashMap<Integer, NoteObject> activeNotes = new ConcurrentHashMap<>();
+    private static final int PANEL_WIDTH = 2400;
+    private static final int PANEL_HEIGHT = 300;
+    private static final int NOTE_SPEED = 1;
+    private static final int TARGET_X = 100;
+
+    private final ConcurrentHashMap<Integer, NoteObject> activeNotes = new ConcurrentHashMap<>();
     private Timer noteTimer;
     private int noteCounter = 0;
+    private Synthesizer synth;
+    private MidiChannel channel;
 
-    private int[][] predefinedNotes = {
-            {48, 1000}, {49, 1100}, {50,1200},{51, 1300}
+    private final int[][] predefinedNotes = {
+            {69, 500},
+            {74, 500}, {69, 500}, {74, 500}, {76, 500}, {73, 500}, {69, 500}, {73, 500}, {74, 500},
+            {71, 500}, {69, 500}, {69, 500}, {67, 500}, {67, 500}, {66, 500}, {64, 500}, {62, 500},
+            {74, 500}, {69, 500}, {74, 500}, {76, 500}, {73, 500}, {69, 500}, {73, 500}, {74, 500},
+            {71, 500}, {69, 500}, {69, 500}, {67, 500}, {67, 500}, {66, 500}, {64, 500}, {62, 500},
+            {86, 500}, {81, 500}, {86, 500}, {88, 500}, {85, 500}, {81, 500}, {85, 500}, {86, 500},
+            {83, 500}, {81, 500}, {81, 500}, {79, 500}, {79, 500}, {78, 500}, {76, 500}, {74, 500},
+            {78, 1000}, {79, 1000}, {76, 1000}, {79, 1000}, {78, 1000}, {78, 1000}, {79, 1000},
+            {76,1000}, {79,1000}, {78, 1000}, {83, 1000}, {83, 1000}, {85, 1000}, {85, 1000}, {81, 500}, {78,1000},
+            {83, 1000}, {83, 1000}, {85, 1000}, {85, 1000}, {81, 500}, {78,1000}, {62, 1000}, {62, 1000}, {64, 1000},
+            {66, 500}, {66, 1000}, {0,1000}, {62, 1000}, {66, 1000}, {69, 1000}, {64, 1000}, {66, 500}, {66, 1000},
+            {71, 500}, {78, 500}, {83, 500}, {81, 500}, {78,1000}, {78,500}, {76,500}, {76, 1000}, {78, 500},
+            {71, 1000}, {71, 500}, {73, 500}, {74, 1000}, {76, 500}, {74, 500}, {73, 500}, {71, 500}, {69,500},
+            {71, 1000}, {81, 500}, {78, 500}, {81, 500}, {76, 500}, {80, 1000}, {50, 1000}, {62,500}, {61, 1000}, {57, 500},
+            {59, 1000}, {57, 500}, {50, 1000}, {78, 1000}, {79,1000}, {76,1000}, {79, 500}, {78, 500}, {78, 1000}, {0, 1000},
+            {78, 1000}, {79, 1000}, {78, 500}, {76, 500}, {78, 500}, {79, 500}, {78, 500}, {78, 1000}, {0, 1000}, {83, 1000},
+            {83, 1000}, {85, 1000}, {85, 1000}, {81, 500}, {78,1000}, {0, 1000}, {83, 1000}, {83, 1000}, {85, 1000}, {85, 1000},
+            {83, 500}, {81, 500}, {78, 1000}, {88, 500}, {83, 500}, {88, 500}, {90, 500}, {87, 500}, {83, 500}, {87, 500}, {88, 500},
+            {85, 500}, {83, 500}, {83, 500}, {81, 500}, {81, 500}, {80, 500}, {78, 500}, {76, 500}, {88, 500}, {83, 500}, {88, 500},
+            {90, 500}, {87, 500}, {83, 500}, {87, 500}, {88, 500}, {85, 500}, {83, 500}, {83, 500}, {81, 500}, {81, 500}, {80, 500},
+            {78, 500}, {76, 500}, {76, 1000}, {76, 1000}, {78, 1000}, {80, 500}, {80, 1000}, {52, 1000}, {0, 1000},
+            {0, 1000}, {76, 1000}, {80, 1000}, {83, 1000}, {78, 1000}, {80, 500}, {80, 1000}, {52, 1000}, {0, 1000},
+            {49, 1000}, {85, 500}, {83, 500}, {80, 1000}, {80, 500}, {78, 500}, {78, 1000}, {80, 500}, {73, 1000}, {73, 500}, {75, 500},
+            {76, 1000}, {78, 500}, {76, 500}, {75, 500}, {73, 500}, {71, 500}, {73, 1000}, {90, 500}, {88, 500}, {87, 500}, {85, 500}, {83, 500},
+            {85, 1000}, {78, 500}, {76, 500}, {75, 500}, {73, 500}, {71, 500}, {73, 1000}, {0, 500}, {71, 500}, {76, 500}, {71, 500}, {76, 500},
+            {78, 500}, {75, 500}, {71, 500}, {75, 500}, {76, 500}, {73, 500}, {71, 500}, {71, 500}, {69, 500}, {69, 500}, {68, 500}, {66, 500},
+            {64, 500}, {76, 500}, {71, 500}, {76, 500}, {78, 500}, {75, 500}, {71, 500}, {75, 500}, {76, 500}, {73, 500}, {71, 500}, {71, 500}, {69, 500},
+            {69, 500}, {68, 500}, {66, 500}, {64, 1000}
     };
 
-    private Set<Integer> sharpNotes = new HashSet<>(Set.of(
-            49, 51, 54, 56, 58,
-            61, 63, 66, 68, 70,
-            73, 75, 78, 80, 82,
-            85, 87, 90, 92, 94,
-            97, 99, 102, 104, 106,
-            109, 111, 114, 116, 118
-    ));
+    private final Set<Integer> sharpNotes = Set.of(
+            49, 51, 54, 56, 58, 61, 63, 66, 68, 70, 73, 75, 78, 80, 82,
+            85, 87, 90, 92, 94, 97, 99, 102, 104, 106, 109, 111, 114, 116, 118
+    );
+
+    private final ImageIcon bassClefIcon;
+    private final ImageIcon trebleClefIcon;
 
     public MusicScorePanel() {
         setPreferredSize(new Dimension(PANEL_WIDTH, PANEL_HEIGHT));
+        setBackground(Color.WHITE);
+        bassClefIcon = loadScaledIcon("https://cdn-icons-png.flaticon.com/512/898/898981.png", 60, 60);
+        trebleClefIcon = loadScaledIcon("https://cdn-icons-png.flaticon.com/512/2/2227.png", 100, 100);
+        setupSynthesizer();
         setupNoteSpawning();
-        setBackground(new Color(255, 255, 255, 255));
+    }
 
-
+    private void setupSynthesizer() {
+        try {
+            synth = MidiSystem.getSynthesizer();
+            synth.open();
+            channel = synth.getChannels()[0];
+        } catch (MidiUnavailableException e) {
+            e.printStackTrace();
+        }
     }
 
     private void setupNoteSpawning() {
         noteTimer = new Timer(predefinedNotes[0][1], e -> {
             spawnNote();
-            if (noteCounter < predefinedNotes.length - 1) {
+            if (noteCounter < predefinedNotes.length) {
                 noteTimer.setDelay(predefinedNotes[noteCounter][1]);
             } else {
                 noteTimer.stop();
@@ -51,7 +86,7 @@ class MusicScorePanel extends JPanel {
         });
         noteTimer.start();
 
-        Timer movementTimer = new Timer(1, e -> moveNotes());
+        Timer movementTimer = new Timer(16, e -> moveNotes());
         movementTimer.start();
     }
 
@@ -64,54 +99,44 @@ class MusicScorePanel extends JPanel {
     }
 
     private void moveNotes() {
-        Iterator<Map.Entry<Integer, NoteObject>> iterator = activeNotes.entrySet().iterator();
-        while (iterator.hasNext()) {
-            Map.Entry<Integer, NoteObject> entry = iterator.next();
+        activeNotes.entrySet().removeIf(entry -> {
             NoteObject note = entry.getValue();
             note.x -= NOTE_SPEED;
-            if (note.x < TARGET_X - 30) {
-                iterator.remove();
+
+            if (note.x == 2100) {
+                playNote(note.midiValue, predefinedNotes[entry.getKey()][1]);
             }
-        }
+
+            return note.x < 170;
+        });
+
         repaint();
+    }
+
+    private void playNote(int midiValue, int duration) {
+        if (channel != null) {
+            channel.noteOn(midiValue, 160);
+            new Timer(duration, e -> channel.noteOff(midiValue)).start();
+        }
     }
 
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         g.setColor(Color.BLACK);
-        g.drawString("Score: " + score, 10, 20);
-        try {
-            drawClefs(g);
-        } catch (MalformedURLException e) {
-            throw new RuntimeException(e);
-        }
+        drawClefs(g);
         drawNotes(g);
     }
 
-    private void drawClefs(Graphics g) throws MalformedURLException {
-        g.setFont(new Font("Serif", Font.BOLD, 50));
-        URL bass_clef = new URL("https://cdn-icons-png.flaticon.com/512/898/898981.png");
-        URL treble_clef = new URL("https://cdn-icons-png.flaticon.com/512/2/2227.png");
-        ImageIcon bassClefIcon = new ImageIcon(bass_clef);
-        ImageIcon trebleClefIcon = new ImageIcon(treble_clef);
-        Image scaledBassImage = bassClefIcon.getImage().getScaledInstance(60, 60, Image.SCALE_SMOOTH);
-        Image scaledTrebleImage = trebleClefIcon.getImage().getScaledInstance(100, 100, Image.SCALE_SMOOTH);
-        ImageIcon scaledBassClefIcon = new ImageIcon(scaledBassImage);
-        ImageIcon scaledTrebleClefIcon = new ImageIcon(scaledTrebleImage);
-
-        scaledBassClefIcon.paintIcon(this, g, 30, 165);
-        scaledTrebleClefIcon.paintIcon(this, g, 0, 50);
+    private void drawClefs(Graphics g) {
+        bassClefIcon.paintIcon(this, g, 30, 165);
+        trebleClefIcon.paintIcon(this, g, 0, 50);
 
         int[] bassStaffLines = {170, 190, 210, 230, 250};
         int[] trebleStaffLines = {50, 70, 90, 110, 130};
 
-        for (int lineY : bassStaffLines) {
-            g.drawLine(20, lineY, PANEL_WIDTH, lineY);
-        }
-        for (int lineY : trebleStaffLines) {
-            g.drawLine(20, lineY, PANEL_WIDTH, lineY);
-        }
+        for (int lineY : bassStaffLines) g.drawLine(20, lineY, PANEL_WIDTH, lineY);
+        for (int lineY : trebleStaffLines) g.drawLine(20, lineY, PANEL_WIDTH, lineY);
     }
 
     private void drawNotes(Graphics g) {
@@ -119,74 +144,46 @@ class MusicScorePanel extends JPanel {
             int noteY = getNoteYPosition(note.midiValue);
             g.setColor(Color.BLACK);
             g.fillOval(note.x, noteY, 20, 20);
-            if (note.isSharp) {
-                g.drawString("#", note.x + 25, noteY + 15);
-            }
+            if (note.isSharp) g.drawString("#", note.x + 25, noteY + 15);
         }
     }
 
     private int getNoteYPosition(int midiValue) {
-        switch (midiValue) {
-            case 48: // C3
-            case 49: // C#3
-                return 220;
-            case 50: // D3
-            case 51: // D#3
-                return 210;
-            case 52: // E3
-                return 200;
-            case 53: // F3
-            case 54: // F#3
-                return 190;
-            case 55: // G3
-            case 56: // G#3
-                return 180;
-            case 57: // A3
-            case 58: // A#3
-                return 170;
-            case 59: // B3
-                return 160;
-            case 60: // C4
-            case 61: // C#4
-                return 140;
-            case 62: // D4
-            case 63: // D#4
-                return 130;
-            case 64: // E4
-                return 120;
-            case 65: // F4
-            case 66: // F#4
-                return 110;
-            case 67: // G4
-            case 68: // G#4
-                return 100;
-            case 69: // A4
-            case 70: // A#4
-                return 90;
-            case 71: // B4
-                return 80;
-            case 72: // C5
-                return 70;
-            case 73: // C#5
-                return 70;
-            case 74: // D5
-            case 75: // D#5
-                return 60;
-            case 76: // E5
-                return 50;
-            case 77: // F5
-            case 78: // F#5
-                return 40;
-            case 79: // G5
-            case 80: // G#5
-                return 30;
-            case 81: // A5
-            case 82: // A#5
-                return 20;
-            case 83: // B5
-                return 10;
-            default:
-                return 0;
+        return switch (midiValue) {
+            case 48, 49 -> 210;
+            case 50, 51 -> 200;
+            case 52 -> 190;
+            case 53, 54 -> 180;
+            case 55, 56 -> 170;
+            case 57, 58 -> 160;
+            case 59 -> 150;
+            case 60, 61 -> 140;
+            case 62, 63 -> 130;
+            case 64 -> 120;
+            case 65, 66 -> 110;
+            case 67, 68 -> 100;
+            case 69, 70 -> 90;
+            case 71 -> 80;
+            case 72, 73 -> 70;
+            case 74, 75 -> 60;
+            case 76 -> 50;
+            case 77, 78 -> 40;
+            case 79, 80 -> 30;
+            case 81, 82 -> 20;
+            case 83 -> 10;
+            case 84, 85,86,87,88,89,90 -> 10;
+            default -> 0;
+        };
+    }
+
+    private ImageIcon loadScaledIcon(String url, int width, int height) {
+        try {
+            ImageIcon icon = new ImageIcon(new URL(url));
+            Image scaled = icon.getImage().getScaledInstance(width, height, Image.SCALE_SMOOTH);
+            return new ImageIcon(scaled);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ImageIcon();
         }
     }
 
@@ -203,11 +200,13 @@ class MusicScorePanel extends JPanel {
     }
 
     public static void main(String[] args) {
-        JFrame frame = new JFrame("Music Score Panel");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.getContentPane().add(new MusicScorePanel());
-        frame.pack();
-        frame.setLocationRelativeTo(null);
-        frame.setVisible(true);
+        SwingUtilities.invokeLater(() -> {
+            JFrame frame = new JFrame("Music Score Panel");
+            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.add(new MusicScorePanel());
+            frame.pack();
+            frame.setLocationRelativeTo(null);
+            frame.setVisible(true);
+        });
     }
 }
