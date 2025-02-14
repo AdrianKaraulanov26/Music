@@ -67,6 +67,11 @@ class MusicScorePanel extends JPanel {
         try {
             synth = MidiSystem.getSynthesizer();
             synth.open();
+            for (MidiChannel c : synth.getChannels()) {
+                c.setMono(false);
+            }
+            synth.getChannels()[0].controlChange(91, 127);
+            synth.getChannels()[0].controlChange(7, 100);
             channel = synth.getChannels()[0];
         } catch (MidiUnavailableException e) {
             e.printStackTrace();
@@ -112,11 +117,13 @@ class MusicScorePanel extends JPanel {
     }
 
     private void playNote(int midiValue, int duration) {
-        if (channel != null) {
-            channel.noteOn(midiValue, 160);
-            new Timer(duration, e -> channel.noteOff(midiValue)).start();
+        if (synth != null) {
+            MidiChannel selectedChannel = midiValue > 80 ? synth.getChannels()[1] : channel;
+            selectedChannel.noteOn(midiValue, 100);
+            new Timer(duration, e -> selectedChannel.noteOff(midiValue)).start();
         }
     }
+
 
     @Override
     protected void paintComponent(Graphics g) {
