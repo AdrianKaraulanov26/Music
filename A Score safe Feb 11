@@ -9,8 +9,6 @@ class MusicScorePanel extends JPanel {
     private static final int PANEL_WIDTH = 2400;
     private static final int PANEL_HEIGHT = 300;
     private static final int NOTE_SPEED = 1;
-    private static final int TARGET_X = 100;
-
     private final ConcurrentHashMap<Integer, NoteObject> activeNotes = new ConcurrentHashMap<>();
     private Timer noteTimer;
     private int noteCounter = 0;
@@ -103,11 +101,11 @@ class MusicScorePanel extends JPanel {
             NoteObject note = entry.getValue();
             note.x -= NOTE_SPEED;
 
-            if (note.x == 2100) {
+            if (note.x == 400) {
                 playNote(note.midiValue, predefinedNotes[entry.getKey()][1]);
             }
 
-            return note.x < 170;
+            return note.x < 400;
         });
 
         repaint();
@@ -126,6 +124,8 @@ class MusicScorePanel extends JPanel {
         g.setColor(Color.BLACK);
         drawClefs(g);
         drawNotes(g);
+        g.setColor(Color.RED);
+        g.fillRect(400,0, 5, 300);
     }
 
     private void drawClefs(Graphics g) {
